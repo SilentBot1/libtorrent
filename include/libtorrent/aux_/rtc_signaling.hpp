@@ -86,8 +86,8 @@ struct TORRENT_EXTRA_EXPORT rtc_signaling final : std::enable_shared_from_this<r
 	alert_manager& alerts() const;
 
 	void close();
-	void generate_offers(int count, offers_handler handler);
-	void process_offer(rtc_offer const& offer);
+	void generate_offers(int count, peer_id pid, offers_handler handler);
+	void process_offer(rtc_offer const& offer, peer_id pid);
 	void process_answer(rtc_answer const& answer);
 
 #ifndef TORRENT_DISABLE_LOGGING
@@ -113,7 +113,7 @@ private:
 
 	connection& create_connection(rtc_offer_id const& offer_id, description_handler handler);
 	void on_generated_offer(error_code const& ec, rtc_offer offer);
-	void on_generated_answer(error_code const& ec, rtc_answer answer, rtc_offer offer);
+	void on_generated_answer(error_code const& ec, rtc_answer answer, rtc_offer offer, peer_id pid);
 	void on_data_channel(error_code const& ec, rtc_offer_id offer_id, std::shared_ptr<rtc::DataChannel> dc);
 
 	io_context& m_io_context;

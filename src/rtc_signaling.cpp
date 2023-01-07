@@ -131,7 +131,7 @@ rtc_offer_id rtc_signaling::generate_offer_id() const
 	return id;
 }
 
-void rtc_signaling::generate_offers(int count, offers_handler handler)
+void rtc_signaling::generate_offers(int count, peer_id pid, offers_handler handler)
 {
 #ifndef TORRENT_DISABLE_LOGGING
 	debug_log("*** RTC signaling generating %d offers", count);
@@ -140,7 +140,6 @@ void rtc_signaling::generate_offers(int count, offers_handler handler)
 	while (count--)
 	{
 		rtc_offer_id offer_id = generate_offer_id();
-		peer_id pid = aux::generate_peer_id(m_torrent->settings());
 
 		auto& conn = create_connection(offer_id, [weak_this = weak_from_this(), offer_id, pid]
 			(error_code const& ec, std::string sdp)
@@ -179,7 +178,7 @@ void rtc_signaling::generate_offers(int count, offers_handler handler)
 	}
 }
 
-void rtc_signaling::process_offer(rtc_offer const& offer)
+void rtc_signaling::process_offer(rtc_offer const& offer, peer_id pid)
 {
 	if (m_connections.find(offer.id) != m_connections.end()) {
 		// It seems the offer is from ourselves, ignore...
@@ -189,7 +188,7 @@ void rtc_signaling::process_offer(rtc_offer const& offer)
 #ifndef TORRENT_DISABLE_LOGGING
 	debug_log("*** RTC signaling processing remote offer");
 #endif
-	auto& conn = create_connection(offer.id, [weak_this = weak_from_this(), offer]
+	auto& conn = create_connection(offer.id, [weak_this = weak_from_this(), offer, pid]
 		(error_code const& ec, std::string sdp)
 	{
 		auto self = weak_this.lock();
@@ -202,6 +201,7 @@ void rtc_signaling::process_offer(rtc_offer const& offer)
 			, ec
 			, std::move(answer)
 			, std::move(offer)
+			, std::move(pid)
 		));
 	});
 
@@ -348,7 +348,7 @@ void rtc_signaling::on_generated_offer(error_code const& ec, rtc_offer offer)
 		m_offer_batches.front().add(ec, std::forward<rtc_offer>(offer));
 }
 
-void rtc_signaling::on_generated_answer(error_code const& ec, rtc_answer answer, rtc_offer offer)
+void rtc_signaling::on_generated_answer(error_code const& ec, rtc_answer answer, rtc_offer offer, peer_id pid)
 {
 	if (ec)
 	{
@@ -359,7 +359,6 @@ void rtc_signaling::on_generated_answer(error_code const& ec, rtc_answer answer,
 	debug_log("*** RTC signaling generated answer");
 #endif
 	TORRENT_ASSERT(offer.answer_callback);
-	peer_id pid = aux::generate_peer_id(m_torrent->settings());
 	offer.answer_callback(pid, answer);
 }
 

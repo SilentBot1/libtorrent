@@ -5999,13 +5999,13 @@ namespace {
 				, std::bind(&torrent::on_rtc_stream, this, _1));
 		}
 
-		m_rtc_signaling->generate_offers(count, std::move(handler));
+		m_rtc_signaling->generate_offers(count, m_peer_id,std::move(handler));
 	}
 
 	void torrent::on_rtc_offer(aux::rtc_offer const& offer)
 	{
 		TORRENT_ASSERT(m_rtc_signaling);
-		if(m_rtc_signaling) m_rtc_signaling->process_offer(offer);
+		if(m_rtc_signaling) m_rtc_signaling->process_offer(offer, m_peer_id);
 	}
 
 	void torrent::on_rtc_answer(aux::rtc_answer const& answer)
